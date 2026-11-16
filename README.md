@@ -4,6 +4,40 @@ CryptoBank is a multi-user ETH vault built with Solidity 0.8.24. Each address ha
 
 For example, if Alice deposits 5 ETH and Bob deposits 2 ETH, the contract holds 7 ETH. Alice can withdraw up to 5 ETH and Bob up to 2 ETH. A deposit cap of 5 ETH applies separately to each account.
 
+## Concepts practiced
+
+- State variables and `mapping(address => uint256)` for per-user accounting
+- `payable` functions and `msg.value`
+- Constructor and owner-only access control with a modifier
+- `require` with custom revert messages
+- Events for deposits and withdrawals
+- Checks-Effects-Interactions and low-level `call` to send ETH
+- Manual testing in Remix, including reverts
+
+## System flow
+
+```mermaid
+flowchart TD
+    USER[User]
+    ADMIN[Admin]
+
+    USER -->|depositEther + ETH| D1{Balance + ETH <= maxBalance?}
+    D1 -->|yes| D2[userBalance increases]
+    D2 --> D3[Emit EtherDeposit]
+    D1 -->|no| DR[Revert: MaxBalance reached]
+
+    USER -->|withdrawEther| W1{Amount <= userBalance?}
+    W1 -->|yes| W2[Effects: userBalance decreases]
+    W2 --> W3[Interaction: send ETH with call]
+    W3 --> W4{Transfer succeeded?}
+    W4 -->|yes| W5[Emit EtherWithdraw]
+    W4 -->|no| WR2[Revert: Transfer failed]
+    W1 -->|no| WR1[Revert: Not enough ether]
+
+    ADMIN -->|modifyMaxBalance| M1[maxBalance updated]
+    USER -.->|modifyMaxBalance| MR[Revert: Not allowed]
+```
+
 ## How it works
 
 | Function | Behavior |
